@@ -1,17 +1,24 @@
 from get_players import get_pickled_players
 from weekly_data import get_fantasy_data
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.impute import SimpleImputer
+import numpy as np
 
-
+# --- Load Data ---
 nfl_players = get_pickled_players()
 fantasy_data = get_fantasy_data()
 full_data = pd.merge(nfl_players, fantasy_data, left_on='full_name', right_on='Player', how='inner')
 full_data.columns = ['player_id', 'full_name', 'position', 'team', 'team_abbr', 'years_exp', 'fantasy_positions', 'status', 'age', 'college', 'Rk', 'Player', 'Tm', 'FantPos', 'Age', 'G', 'GS', 'Cmp', 'PassAtt', 'PassYds', 'PassTD', 'Int', 'RushAtt', 'RushYds', 'RushY/A', 'RushTD', 'RecTgt', 'Rec', 'RecYds', 'RecY/R', 'RecTD', 'Fmb', 'FL', 'TD', '2PM', '2PP', 'FantPt', 'PPR', 'DKPt', 'FDPt', 'VBD', 'PosRank', 'OvRank']
 
+# --- Data Cleaning / Type Conversion ---
 cols_to_numeric = ['Age', 'G', 'GS', 'Cmp', 'PassAtt', 'PassYds', 'PassTD', 'Int', 'RushAtt', 'RushYds', 'RushY/A', 'RushTD', 'RecTgt', 'Rec', 'RecYds', 'RecY/R', 'RecTD', 'Fmb', 'FL', 'TD', '2PM', '2PP', 'FantPt', 'PPR', 'DKPt', 'FDPt', 'VBD', 'PosRank', 'OvRank']
 for col in cols_to_numeric:
     full_data[col] = pd.to_numeric(full_data[col], errors='coerce')
-# Feature engineering
+
+# --- Feature Engineering ---
 
 # Per game metrics
 full_data['pass_yds_per_game'] = full_data['PassYds'] / full_data['G'].replace(0, pd.NA)
@@ -37,19 +44,7 @@ full_data['total_yards'] = full_data['PassYds'] + full_data['RushYds'] + full_da
 full_data['pos_rank_norm'] = full_data['PosRank'] / full_data['PosRank'].max()
 full_data['ov_rank_norm'] = full_data['OvRank'] / full_data['OvRank'].max()
 
-# One-hot encoding for position
-position_dummies = pd.get_dummies(full_data['position'], prefix='pos')
-
-# Combine all features into feature matrix X
-feature_cols = [
-    'pass_yds_per_game', 'rush_yds_per_game', 'rec_yds_per_game', 'rec_per_game',
-    'rush_att_per_game', 'pass_att_per_game', 'targets_per_game', 'catch_rate',
-    'rush_td_rate', 'rec_td_rate', 'pass_td_rate', 'int_rate', 'total_touchdowns',
-    'total_yards', 'pos_rank_norm', 'ov_rank_norm'
-]
-
-X = pd.concat([full_data[feature_cols], position_dummies], axis=1)
-
+# --- Target Creation ---
 # Define breakout as top 20% of players in PPR per game per position
 full_data['PPR_per_game'] = full_data['PPR'] / full_data['G'].replace(0, pd.NA)
 
@@ -63,30 +58,35 @@ y = full_data['Breakout']
 
 print(y.value_counts())
 
-# --- ML Classification: Logistic Regression ---
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.impute import SimpleImputer
-import numpy as np
+# --- Prepare Feature Matrix ---
+# One-hot encoding for position
+position_dummies = pd.get_dummies(full_data['position'], prefix='pos')
 
+feature_cols = [
+    'pass_yds_per_game', 'rush_yds_per_game', 'rec_yds_per_game', 'rec_per_game',
+    'rush_att_per_game', 'pass_att_per_game', 'targets_per_game', 'catch_rate',
+    'rush_td_rate', 'rec_td_rate', 'pass_td_rate', 'int_rate', 'total_touchdowns',
+    'total_yards', 'pos_rank_norm', 'ov_rank_norm'
+]
+
+X = pd.concat([full_data[feature_cols], position_dummies], axis=1)
+
+# --- Handle Missing Values ---
 X = X.where(pd.notna(X), np.nan)
 imputer = SimpleImputer(strategy="constant", fill_value=0)
 X = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
 
-# Split data into train and test sets, stratified by y
+# --- Train/Test Split ---
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
 
-# Train logistic regression
+# --- Model Training & Evaluation ---
 clf = LogisticRegression(max_iter=1000)
 clf.fit(X_train, y_train)
 
-# Predict on test set
 y_pred = clf.predict(X_test)
 
-# Print confusion matrix and classification report
 print("Confusion Matrix:")
 print(confusion_matrix(y_test, y_pred))
 print("\nClassification Report:")
