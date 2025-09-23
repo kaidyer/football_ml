@@ -91,3 +91,16 @@ print("Confusion Matrix:")
 print(confusion_matrix(y_test, y_pred))
 print("\nClassification Report:")
 print(classification_report(y_test, y_pred))
+
+# --- Compute predicted breakout probabilities for all players ---
+breakout_probs = clf.predict_proba(X)[:, 1]
+full_data['Breakout_Prob'] = breakout_probs
+
+# Sort full_data by Breakout_Prob in descending order
+full_data_sorted = full_data.sort_values(by='Breakout_Prob', ascending=False)
+
+# Print top 10 players with full_name, position, and Breakout_Prob
+print("\nTop 10 Players by Predicted Breakout Probability:")
+print(full_data_sorted[['full_name', 'position', 'Breakout_Prob']].head(10))
+
+full_data_sorted.to_pickle("full_data.pkl")
