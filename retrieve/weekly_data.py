@@ -1,6 +1,10 @@
-import requests, time, pickle
+import requests, pickle, os
 import pandas as pd
 from bs4 import BeautifulSoup
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent      # folder2/
+PKL_DIR = BASE_DIR.parent / "pickles"   # folder/data
 
 def build_fantasy_data():
     url = f"https://www.pro-football-reference.com/years/2025/fantasy.htm"
@@ -21,8 +25,6 @@ def build_fantasy_data():
 
     fantasy_data = df
 
-    time.sleep(3)  # be polite and avoid hammering the server
-
     # Clean data: drop rows where Player is 'Player' (header rows repeated), and drop rows with all NaNs
     fantasy_data = fantasy_data[fantasy_data['Player'] != 'Player']
     fantasy_data = fantasy_data.dropna(how='all')
@@ -31,9 +33,10 @@ def build_fantasy_data():
     fantasy_data = fantasy_data.reset_index(drop=True)
 
     # Save to pickle and CSV
-    fantasy_data.to_pickle('fantasy_overall_2025.pkl')
+    fantasy_data.to_pickle(os.path.join(PKL_DIR, 'fantasy_overall_2025.pkl'))
 
 
 def get_fantasy_data():
-    with open("fantasy_overall_2025.pkl", "rb") as f:
+    with open(os.path.join(PKL_DIR, 'fantasy_overall_2025.pkl'), "rb") as f:
         return pickle.load(f)
+

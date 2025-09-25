@@ -1,9 +1,7 @@
-import pickle
-from espn_fantasy import getFA
-
-def get_full_data():
-    with open("full_data.pkl", "rb") as f:
-        return pickle.load(f)
+import pickle, os
+from retrieve.espn_fantasy import getFA
+from pathlib import Path
+from retrieve.get_players import get_full_data
 
 
 def crossRefFA():
@@ -17,5 +15,10 @@ def crossRefFA():
     return sorted_dict_by_value
 
 
-for player, value in crossRefFA().items():
-    print(player," ", value)
+def main():
+    for player, value in crossRefFA().items():
+        print(player," ", value)
+
+
+if __name__ == "__main__":
+    main()
