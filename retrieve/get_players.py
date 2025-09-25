@@ -1,8 +1,10 @@
 from sleeper.api import get_all_players
-import pickle
+import pickle, os
 import pandas as pd
+from pathlib import Path
 
-
+BASE_DIR = Path(__file__).parent      # folder2/
+PKL_DIR = BASE_DIR.parent / "pickles"   # folder/data
 
 def pickle_players():
     """
@@ -12,7 +14,7 @@ def pickle_players():
     # get all players in a sport
     nfl_players = get_all_players(sport="nfl")
 
-    with open("all_players.pkl", "wb") as f:
+    with open(os.path.join(PKL_DIR, "all_players.pkl"), "wb") as f:
         pickle.dump(nfl_players, f)
 
 
@@ -39,7 +41,7 @@ def clean_data(nfl_players):
     # Reset index
     nfl_players.reset_index(drop=True, inplace=True)
 
-    with open("all_players.pkl", "wb") as f:
+    with open(os.path.join(PKL_DIR, "all_players.pkl"), "wb") as f:
         pickle.dump(nfl_players, f)
 
 
@@ -49,6 +51,11 @@ def get_pickled_players():
     :return:
         A dataframe of all players that are not a free agent.
     """
-    with open("all_players.pkl", "rb") as f:
+    with open(os.path.join(PKL_DIR, "all_players.pkl"), "rb") as f:
+        return pickle.load(f)
+
+
+def get_full_data():
+    with open(os.path.join(PKL_DIR, "full_data.pkl"), "rb") as f:
         return pickle.load(f)
 

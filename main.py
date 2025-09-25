@@ -1,11 +1,16 @@
-from get_players import get_pickled_players
-from weekly_data import get_fantasy_data
+from retrieve.get_players import get_pickled_players
+from retrieve.weekly_data import get_fantasy_data
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.impute import SimpleImputer
 import numpy as np
+from pathlib import Path
+import os
+
+BASE_DIR = Path(__file__).parent      # folder2/
+PKL_DIR = BASE_DIR / "pickles"   # folder/data
 
 # --- Load Data ---
 nfl_players = get_pickled_players()
@@ -103,4 +108,4 @@ full_data_sorted = full_data.sort_values(by='Breakout_Prob', ascending=False)
 print("\nTop 10 Players by Predicted Breakout Probability:")
 print(full_data_sorted[['full_name', 'position', 'Breakout_Prob']].head(10))
 
-full_data_sorted.to_pickle("full_data.pkl")
+full_data_sorted.to_pickle(os.path.join(PKL_DIR, "full_data.pkl"))
