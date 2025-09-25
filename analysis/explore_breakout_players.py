@@ -15,5 +15,10 @@ def crossRefFA():
     return sorted_dict_by_value
 
 
-for player, value in crossRefFA().items():
-    print(player," ", value)
+def main():
+    for player, value in crossRefFA().items():
+        print(player," ", value)
+
+
+if __name__ == "__main__":
+    main()

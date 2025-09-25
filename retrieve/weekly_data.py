@@ -39,3 +39,4 @@ def build_fantasy_data():
 def get_fantasy_data():
     with open(os.path.join(PKL_DIR, 'fantasy_overall_2025.pkl'), "rb") as f:
         return pickle.load(f)
+
