@@ -16,6 +16,14 @@ def get_weekly_data(year = 2024):
     return pd.read_pickle(PKL_DIR / (str(year) + "_weekly.pkl"))
 
 
+def save_sliding():
+    sliding_df = make_sliding_window_dataset()
+    sliding_df.to_pickle(PKL_DIR / "2024_sliding.pkl")
+
+
+def get_sliding(year = 2024):
+    return pd.read_pickle(PKL_DIR / (str(year) + "_sliding.pkl"))
+
 
 def make_sliding_window_dataset(window=3):
     """
@@ -54,7 +62,7 @@ def make_sliding_window_dataset(window=3):
         week_all.extend(group['week'].values[window:])
 
     # Create a DataFrame
-    X_df = pd.DataFrame(X_all, columns=[f'week_t-{window-i}' for i in range(window,0,-1)])
+    X_df = pd.DataFrame(X_all, columns=[f'week_t-{i}' for i in range(window,0,-1)])
     X_df['y'] = y_all
     X_df['player_id'] = player_all
     X_df['player_name'] = player_name_all
@@ -62,6 +70,3 @@ def make_sliding_window_dataset(window=3):
 
     return X_df
 
-
-sliding_df = make_sliding_window_dataset()
-print(sliding_df.head())
